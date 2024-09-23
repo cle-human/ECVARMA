@@ -21,3 +21,7 @@ Depends:
     polyMatrix
 URL: https://github.com/cle-human/ECVARMA
 BugReports: https://github.com/cle-human/ECVARMA/issues
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

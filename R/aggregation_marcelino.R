@@ -2,7 +2,7 @@
 #' @description A function to derive the temporally aggregated error correction model.
 #'
 #' @param ecvarma an ECVARMA object, created by ecvarma.define, an ECVARMA aggregation function or an estimated ECVARMA process
-#' @param l the aggregation period length
+#' @param l the aggregation period length, i.e. if the original frequency is weekly and l=2, the new frequency will be biweekly
 #' @param f the used aggregation method: average aggregation - avg, beginning of period sampling - bop
 #' @param start.values for the Newton method to find the aggregated error variance-covariance matrix and MA parameter (k x k+k*q_agg), with "auto" these are generated automatically
 #' @return an ECVARMA object of the aggregated model

@@ -8,6 +8,9 @@ ecvarma.toFMA<-function(ecvarma){ #para=result of theoretical aggregation functi
   if (attr(ecvarma,"determination")=="converted to FMA") {
     stop("ECVARMA is already in FMA form.")
   }
+  if (attr(ecvarma,"determination")=="estimated"&ecvarma[["estimation"]][["specification.scheme"]]=="final moving average") {
+    stop("ECVARMA is already in FMA form.")
+  }
   k<-ecvarma[["model.specification"]][["k"]]
   p<-ecvarma[["model.specification"]][["p"]]
   q<-ecvarma[["model.specification"]][["q"]]

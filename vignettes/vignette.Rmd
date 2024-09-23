@@ -1,0 +1,113 @@
+---
+title: "ECVARMA"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ECVARMA)
+```
+
+# ECVARMA models
+
+The ECVARMA package is build to estimate, aggregate and simulate EC-VARMA models, i.e. error correction models with $k$ variables which use the following form: $$A_0\Delta Y_t=\alpha\beta^{'} Y_{t-1}+ \mu +\sum_{i=1}^{p} \Gamma _i  \Delta Y_{t-i}+u_t+\sum_{j=1}^{q} M _j  u_{t-j}; u_t\sim N(0,\Sigma)$$Here $Y_t$ is the time series data in levels, $\Delta Y_t$ is the time series in first differences. The $\alpha$ stand for the so-called adjustment parameters and the $\beta$ are the parameters of the $r$ cointegration vectors. $\mu$ is a constant in the short-run dynamic, alternatively a restricted constant can also be added to the $\beta$. The $\Gamma_i$ contain the parameters of the autoregressive (AR) dynamic with $p$ lags and $u_t$ are the error terms. These can be lagged and than are multiplied with $M_j$, the parameter matrices of the moving average (MA) dynamic. The error terms assumed to be normal-distributed with mean zero and variance-covariance matrix $\Sigma$. For some estimations, a matrix $A_0$ will describe the relationship between the dependent variables.
+
+## ECVARMA objects
+
+The package is written that all information of a model are collected in ECVARMA objects. These are lists of the model specification and parameter values. The function `ecvarma.define()` allows to create new ECVARMA objects with given parameter values. The resulting ECVARMA object can then be used to simulate a data set with the function `ecvarma.sim()` or to be aggregated with an aggregation function.
+
+```{r}
+#specification of an example 
+specified_model<-ecvarma.define(A0 = NULL,
+                         alphas = matrix(c(-0.16,-0.04,0.11,0.1,-0.08,0.02),3,2),
+                         betas = cbind(diag(2),-1),
+                         AR = matrix(c(-0.24,0.67,0.36,0.12,0.07,0.13,0.06,-0.17,0.03),3,3),
+                         MA = matrix(c(0.85,0.49,0.55,0.26,0.1,-0.4,0.26,0,0.43),3,3),
+                         Sigma = diag(3),
+                         include = "none")
+#simulation of example data
+example_data<-ecvarma.sim(ecvarma = specified_model,
+                     sample.size = 1000,
+                     n = 100,
+                     seed = 10)
+```
+
+## EC-VARMA estimation
+
+The estimation of EC-VARMA models is not as straight forward as the one of standard VECMs without MA parameter. Because AR and MA dynamic can have effect which cancel each other, a model specification that excludes those is necessary. In this package, three approaches are implemented. The simplest is the Final Moving Average form. It restricts the MA dynamic to a scalar (times an identity matrix). The specification criterion of Kascha and Trenkler (2015) can be used to determine the lag orders.
+
+```{r}
+#determining the lag order
+lag.select.fma(input = example_data)
+
+#estimating the FMA model
+estimated_FMA_model<-ecvarma.fma(input = example_data,
+                                 p = 2,    #number of AR lags
+                                 r = 2,    #cointegration rank
+                                 q = 1,    #number of MA lags
+                                 include = "none" #whether a constant should be added to the model 
+                                 )
+
+```
+
+A EC-VARMA model can be converted to FMA form with the function `ecvarma.toFMA()`. (The other way around is impossible.)
+
+The second specification approach is the Diagonal Moving Average (DMA) form. It's very similar to the FMA form, the only difference is that each of the $k$ dependent variables has its own independent MA dynamic. Therefore, the estimation function `ecvarma.dma` has the same parameters as `ecvarma.fma`.
+
+The third approach is the Scalar Component Modell by Athanasopoulos et al. (2016). They adapted the methodology for VARMA models by Tiao and Tsay (1989). Conceptually, this approach searches for the $k$ sub-processes with the smallest possible lag orders, the scalar components (SC). The dependent variables are a linear combination of these SC. (The parameter matrix $A_0$ translates the SC to the linear combination.)
+
+Athanasopoulos et al. (2016) showed that the same method to find the SC in a VARMA model can be used to find them in an EC-VARMA model. (The identification method is implemented in the R package "MTS".) Further, they developed a non-parametric cointegration criterium to find the rank of the $\beta$ matrix.
+
+```{r}
+#find cointegration rank
+coint.criterion(example_data)
+
+#find scalar components
+#MTS::SCMid(example_data)
+
+#estimating the SCM
+estimated_model<-ecvarma.scm(input = example_data,
+                             sc = matrix(c(2,1,
+                                           2,1,
+                                           2,1),3,2,byrow = TRUE), #correct scalar components for our example process
+                             r=2, #cointegration rank
+                             n=10, #number of estimation iterations
+                             include = "none") #no constant included in the model
+
+```
+
+The estimation functions rely on iterative solving algorithms. The standard is a Newton algorithm, whose number of iterations can be set with the parameter $n$. Alternatively, the "nlminb" solver from the "stats" package can be used. The values of $A_0$ are the ones that converge the slowest to their true values, so it might be better to use "nlminb" if the Newton algorithm doesn't converge for a relatively small number of iterations.
+
+For the three approaches, an internal function determines which parameters should be included in the estimation. With the function `ecvarma`, you can set your own restrictions.
+
+## EC-VARMA aggregation
+
+This package includes also two aggregation functions, one for temporal aggregation and one for contemporaneous aggregation. Marcellino (1999) provides a framework to determine the temporally aggregated EC-VARMA model. The function `ecvarma.agg.M` allows changes the frequency of a model and either applies skip aggregation with the first values of an aggregation period or average aggregation with averages of all values inside an aggregation period.
+
+```{r}
+#aggregation from a weekly frequency to four-weekly (monthly) one
+temporal_aggregated_model<-ecvarma.agg.M(ecvarma = specified_model,
+                                         l=4,
+                                         f="bop")#beginning of period
+```
+
+For contemporaneous aggregation (which includes spatial aggregation), the function `ecvarma.agg.con` can be used to find the aggregated model whose dimension is reduced from $k$ to $m$ . The function will always remove the last $l$ variables. With a full rank transformation matrix $F$ , the order of the variables can be easily switched or contemporaneous aggregates included in the aggregated model.
+
+```{r}
+#aggregation of the first two variables to an average value
+spatial_aggregated_model<-ecvarma.agg.con(ecvarma = specified_model,
+                                          l=1,
+                                          Fmat=matrix(c(0.5,0.5,0,
+                                                         0 , 0 ,1,
+                                                         1 , 0 ,0),3,3,byrow=TRUE))
+```

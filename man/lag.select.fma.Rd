@@ -4,7 +4,7 @@
 \alias{lag.select.fma}
 \title{FMA lag criterion by Kascha and Trenkler (2015)}
 \usage{
-\method{lag}{select.fma}(input, h = "auto", v = 0.5)
+lag.select.fma(input, h = "auto", v = 0.5)
 }
 \arguments{
 \item{input}{a matrix of time series data (the bigger dimension is considered to be the sample size)}
