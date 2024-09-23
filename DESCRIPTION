@@ -19,3 +19,5 @@ Imports:
 Depends:
     polynom,
     polyMatrix
+URL: https://github.com/cle-human/ECVARMA
+BugReports: https://github.com/cle-human/ECVARMA/issues
