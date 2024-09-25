@@ -7,4 +7,7 @@
 .DS_Store
 .quarto
 ECVARMA.Rproj
+<<<<<<< HEAD
 inst/doc
+=======
+>>>>>>> 43d6a9ac804b393a726ab711a98e42a237d6e31b
