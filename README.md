@@ -38,18 +38,7 @@ them.
 
 ``` r
 library(ECVARMA)
-#> Loading required package: polynom
-#> Warning: package 'polynom' was built under R version 4.3.2
-#> Loading required package: polyMatrix
-#> Warning: package 'polyMatrix' was built under R version 4.3.2
-#> 
-#> Attaching package: 'polyMatrix'
-#> The following objects are masked from 'package:polynom':
-#> 
-#>     GCD, LCM
-#> The following objects are masked from 'package:base':
-#> 
-#>     cbind, rbind
+
 #specification of the example 
 specified_model<-ecvarma.define(A0 = NULL,
                          alphas = matrix(c(-0.16,-0.04,0.11,0.1,-0.08,0.02),3,2),
@@ -79,9 +68,6 @@ estimated_model<-ecvarma.scm(input = example_data,
                              r=2, #cointegration rank
                              n=10, #number of estimation iterations
                              include = "none") #no constant included in the model
-#> Registered S3 method overwritten by 'quantmod':
-#>   method            from
-#>   as.zoo.data.frame zoo
   
 #temporal aggregation
 aggregated_model<-ecvarma.agg.M(ecvarma = specified_model,
