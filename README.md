@@ -55,7 +55,6 @@ example_data<-ecvarma.sim(ecvarma = specified_model, #an ECVARMA object
 
 #find cointegration rank
 coint.criterion(example_data)
-#> cointegration rank =  1
 
 #find scalar components
 #MTS::SCMid(example_data)
