@@ -74,7 +74,12 @@ ecvarma.sim<-function(ecvarma,sample.size,n,seed=0){
     A0i<-solve(A0)
     alphas<-A0i%*%alphas
     AR<-A0i%*%AR
-    MA<-A0i%*%MA
+    A0m<-matrix(0,q*k,q*k)
+    for (i in 1:q-1) {
+      A0m[1:k+k*i,1:k+k*i]<-A0
+    }
+    MA<-A0i%*%MA%*%A0m
+    sig<-A0i%*%sig%*%t(A0i)
   }
 
   n<-max(n,p,q)
